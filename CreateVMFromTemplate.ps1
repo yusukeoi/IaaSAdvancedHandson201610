@@ -1,72 +1,70 @@
+﻿# 概要：
+# VMテンプレートから新規VMを作成する。
+
+# 前提：
+# 1. ストレージアカウントはすでに作成され、vhdsコンテナーにVMイメージがコピーされていること。(まだの場合はCreateStorageAccount.ps1を実行すること)
+# 2. 仮想ネットワークはすでに作成されていること。またそのサブネットは1つだけであること。
+
+####################################################################
+
+# サブスクリプション名
 $subscriptionName = "Hybrid ID"
 
-$storageAccountName = "test20160928"
+# ストレージアカウント名(すでに作成済みという前提)
+$storageAccountName = "yooiaad01d"
+# ストレージアカウントおよびVMのリソースグループ名(すでに作成済みという前提)
+$systemRG = "yooiaad01d"
+# VMイメージ名(すでにストレージアカウントにコピー済みという前提)
+$imageVHD = "template01201672915257.vhd"
 
-$systemRG = "yooiaad01c"
-
-$vmName = "test20160928"
-
-# Size of the virtual machine. See the VM sizes documentation for more information: https://azure.microsoft.com/documentation/articles/virtual-machines-windows-sizes/
-$vmSize = "Standard_D1_v2"
-
-# Computer name for the VM
-$hostName = "test20160928"
-
-# Name of the disk that holds the OS
-$osDiskName = $vmName + "osdisk"
-
-$location = "eastasia"
-
+# 仮想ネットワークのリソースグループ名(すでに作成済みという前提)
 $vnetRG = "aad01-Migrated"
+# 仮想ネットワーク名(すでに作成済みという前提)
 $vnetName = "aad01"
 
-$pipName = $vmName + "pip"
-$nicName = $vmName + "nic"
+# VMを作成する場所(ストレージアカウントや仮想ネットワークと同じ場所であること)
+$location = "eastasia"
 
-$privateIP = "192.168.0.90"
+# Azure VM名
+$vmName = "yooiaad01d"
+# VMサイズ https://azure.microsoft.com/documentation/articles/virtual-machines-windows-sizes/
+$vmSize = "Standard_D1_v2"
+# (OS上の)コンピュータ名
+$computerName = "yooiaad01d"
+# VMの内部IP
+$privateIP = "192.168.0.91"
 
-$storageAccountName = "yooiaad01c"
+# 課金IDタグ
+$tags += @{Name="billingid";value="99999"}
 
-$imageURI = "https://yooiaad01c.blob.core.windows.net/vhds/template01201672915257.vhd"
+####################################################################
 
-
-===================
 Login-AzureRmAccount
 
 Select-AzureRmSubscription -SubscriptionName $subscriptionName
 
-
+# Windows OS上の管理者IDおよびパスワードの入力
 $windowsAdmin = Get-Credential
 
 $vnet = Get-AzureRmVirtualNetwork -ResourceGroupName $vnetRG -Name $vnetName  
-$subnet = $vnet.Subnets[0].Id
 
+# 外部IPの作成 (外部IPを付与しない場合は以下2行をコメントアウトすること)
+$pipName = $vmName + "pip"
 $pip = New-AzureRmPublicIpAddress -Name $pipName -ResourceGroupName $systemRG -Location $location -AllocationMethod Dynamic
+
+# 仮想NICの作成および内部IPの指定
+$nicName = $vmName + "nic"
 $nic = New-AzureRmNetworkInterface -Name $nicName -ResourceGroupName $systemRG -Location $location -SubnetId $vnet.Subnets[0].Id -PublicIpAddressId $pip.Id -PrivateIpAddress $privateIP
 
 $storageAccount = Get-AzureRmStorageAccount -ResourceGroupName $systemRG -Name $storageAccountName
+$imageURI = $storageAccount.PrimaryEndpoints.Blob + "vhds/" + $imageVHD
 
-#Set the VM name and size
-#Use "Get-Help New-AzureRmVMConfig" to know the available options for -VMsize
+# VMの作成
 $vmConfig = New-AzureRmVMConfig -VMName $vmName -VMSize $vmSize
-
-#Set the Windows operating system configuration and add the NIC
-$vm = Set-AzureRmVMOperatingSystem -VM $vmConfig -Windows -ComputerName $hostName -Credential $windowsAdmin -ProvisionVMAgent -EnableAutoUpdate
+$vm = Set-AzureRmVMOperatingSystem -VM $vmConfig -Windows -ComputerName $computerName -Credential $windowsAdmin -ProvisionVMAgent -EnableAutoUpdate
 $vm = Add-AzureRmVMNetworkInterface -VM $vm -Id $nic.Id
-
-#Create the OS disk URI
+$osDiskName = $vmName + "osdisk"
 $osDiskUri = '{0}vhds/{1}-{2}.vhd' -f $storageAccount.PrimaryEndpoints.Blob.ToString(), $vmName.ToLower(), $osDiskName
-
-#Configure the OS disk to be created from the image (-CreateOption fromImage), and give the URL of the uploaded image VHD for the -SourceImageUri parameter
-#You set this variable when you uploaded the VHD
 $vm = Set-AzureRmVMOSDisk -VM $vm -Name $osDiskName -VhdUri $osDiskUri -CreateOption fromImage -SourceImageUri $imageURI -Windows
-    
-$tags += @{Name="billingId";Value="20018"}
-
-
-# Set-AzureRmResource -ResourceGroupName $systemRG -Name $vmName -ResourceType "Microsoft.Compute/VirtualMachines" -Tag $tags
-
-#Create the new VM
-New-AzureRmVM -ResourceGroupName $systemRG -Location $location -VM $vm
-
+New-AzureRmVM -ResourceGroupName $systemRG -Location $location -VM $vm -Tags $tags
 
