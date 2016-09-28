@@ -1,64 +1,72 @@
-$vnet = Get-AzureRmVirtualNetwork -ResourceGroupName TestRG -Name TestVNet  
-$subnet = $vnet.Subnets[0].Id
+$subscriptionName = "Hybrid ID"
 
-$pip = New-AzureRmPublicIpAddress -Name TestPIP -ResourceGroupName $rgName -Location $locName -AllocationMethod Dynamic
+$storageAccountName = "test20160928"
 
-$nic = New-AzureRmNetworkInterface -Name TestNIC -ResourceGroupName $rgName -Location $locName -SubnetId $vnet.Subnets[0].Id -PublicIpAddressId $pip.Id -PrivateIpAddress 192.168.1.101
+$systemRG = "yooiaad01c"
 
-$vm = New-AzureRmVMConfig -VMName DNS01 -VMSize "Standard_A1"
-$vm = Set-AzureRmVMOperatingSystem -VM $vm -Windows -ComputerName DNS01  -Credential $cred -ProvisionVMAgent -EnableAutoUpdate
-$vm = Set-AzureRmVMSourceImage -VM $vm -PublisherName MicrosoftWindowsServer -Offer WindowsServer -Skus 2012-R2-Datacenter -Version "latest"
-$vm = Add-AzureRmVMNetworkInterface -VM $vm -Id $nic.Id
-$osDiskUri = $storageAcc.PrimaryEndpoints.Blob.ToString() + "vhds/WindowsVMosDisk.vhd"
-$vm = Set-AzureRmVMOSDisk -VM $vm -Name "windowsvmosdisk" -VhdUri $osDiskUri -CreateOption fromImage
-New-AzureRmVM -ResourceGroupName $rgName -Location $locName -VM $vm 
-
-================
-
-#Create variables
-# Enter a new user name and password to use as the local administrator account for the remotely accessing the VM
-$cred = Get-Credential
-
-# Name of the storage account 
-$storageAccName = "<storageAccountName>"
-
-# Name of the virtual machine
-$vmName = "<vmName>"
+$vmName = "test20160928"
 
 # Size of the virtual machine. See the VM sizes documentation for more information: https://azure.microsoft.com/documentation/articles/virtual-machines-windows-sizes/
-$vmSize = "<vmSize>"
+$vmSize = "Standard_D1_v2"
 
 # Computer name for the VM
-$computerName = "<computerName>"
+$hostName = "test20160928"
 
 # Name of the disk that holds the OS
-$osDiskName = "<osDiskName>"
+$osDiskName = $vmName + "osdisk"
 
-# Assign a SKU name
-# Valid values for -SkuName are: **Standard_LRS** - locally redundant storage, **Standard_ZRS** - zone redundant storage, **Standard_GRS** - geo redundant storage, **Standard_RAGRS** - read access geo redundant storage, **Premium_LRS** - premium locally redundant storage. 
-$skuName = "<skuName>"
+$location = "eastasia"
 
-# Create a new storage account for the VM
-New-AzureRmStorageAccount -ResourceGroupName $rgName -Name $storageAccName -Location $location -SkuName $skuName -Kind "Storage"
+$vnetRG = "aad01-Migrated"
+$vnetName = "aad01"
 
-#Get the storage account where the uploaded image is stored
-$storageAcc = Get-AzureRmStorageAccount -ResourceGroupName $rgName -AccountName $storageAccName
+$pipName = $vmName + "pip"
+$nicName = $vmName + "nic"
+
+$privateIP = "192.168.0.90"
+
+$storageAccountName = "yooiaad01c"
+
+$imageURI = "https://yooiaad01c.blob.core.windows.net/vhds/template01201672915257.vhd"
+
+
+===================
+Login-AzureRmAccount
+
+Select-AzureRmSubscription -SubscriptionName $subscriptionName
+
+
+$windowsAdmin = Get-Credential
+
+$vnet = Get-AzureRmVirtualNetwork -ResourceGroupName $vnetRG -Name $vnetName  
+$subnet = $vnet.Subnets[0].Id
+
+$pip = New-AzureRmPublicIpAddress -Name $pipName -ResourceGroupName $systemRG -Location $location -AllocationMethod Dynamic
+$nic = New-AzureRmNetworkInterface -Name $nicName -ResourceGroupName $systemRG -Location $location -SubnetId $vnet.Subnets[0].Id -PublicIpAddressId $pip.Id -PrivateIpAddress $privateIP
+
+$storageAccount = Get-AzureRmStorageAccount -ResourceGroupName $systemRG -Name $storageAccountName
 
 #Set the VM name and size
 #Use "Get-Help New-AzureRmVMConfig" to know the available options for -VMsize
 $vmConfig = New-AzureRmVMConfig -VMName $vmName -VMSize $vmSize
 
 #Set the Windows operating system configuration and add the NIC
-$vm = Set-AzureRmVMOperatingSystem -VM $vmConfig -Windows -ComputerName $computerName -Credential $cred -ProvisionVMAgent -EnableAutoUpdate
-
+$vm = Set-AzureRmVMOperatingSystem -VM $vmConfig -Windows -ComputerName $hostName -Credential $windowsAdmin -ProvisionVMAgent -EnableAutoUpdate
 $vm = Add-AzureRmVMNetworkInterface -VM $vm -Id $nic.Id
 
 #Create the OS disk URI
-$osDiskUri = '{0}vhds/{1}-{2}.vhd' -f $storageAcc.PrimaryEndpoints.Blob.ToString(), $vmName.ToLower(), $osDiskName
+$osDiskUri = '{0}vhds/{1}-{2}.vhd' -f $storageAccount.PrimaryEndpoints.Blob.ToString(), $vmName.ToLower(), $osDiskName
 
 #Configure the OS disk to be created from the image (-CreateOption fromImage), and give the URL of the uploaded image VHD for the -SourceImageUri parameter
 #You set this variable when you uploaded the VHD
 $vm = Set-AzureRmVMOSDisk -VM $vm -Name $osDiskName -VhdUri $osDiskUri -CreateOption fromImage -SourceImageUri $imageURI -Windows
+    
+$tags += @{Name="billingId";Value="20018"}
+
+
+# Set-AzureRmResource -ResourceGroupName $systemRG -Name $vmName -ResourceType "Microsoft.Compute/VirtualMachines" -Tag $tags
 
 #Create the new VM
-New-AzureRmVM -ResourceGroupName $rgName -Location $location -VM $vm
+New-AzureRmVM -ResourceGroupName $systemRG -Location $location -VM $vm
+
+
