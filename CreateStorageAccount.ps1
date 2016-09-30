@@ -13,8 +13,10 @@ $subscriptionName = "サブスクリプション名"
 $imageStorageAccoutName = "aztrNNst01"
 # VMイメージが保管されているストレージアカウントのリソースグループ名
 $imageStorageAccountRG = "aztrNNvm-rg"
-# VMイメージ名
-$imageVHD = "template01201672915257.vhd"
+# VMイメージが配置されているコンテナ (VMイメージのURLの最後の "/" の前まで)
+$source = "https://aztr99st01.blob.core.windows.net/system/Microsoft.Compute/Images/vhds"
+# VMイメージ名 (VMイメージのURLの最後の "/" の後ろ)
+$imageVHD = "vmtemplate-osDisk.758e818f-72f2-46b4-a447-fb612c924a16.vhd"
 
 # 新規作成するストレージアカウント名
 $newStorageAccountName = "aztrNNst02"
@@ -41,8 +43,7 @@ $imageStorageAccount = Get-AzureRmStorageAccount -ResourceGroupName $imageStorag
 New-AzureRmResourceGroup -Name $newStorageAccountRG -Location $location
 $newStorageAccount = New-AzureRmStorageAccount -ResourceGroupName $newStorageAccountRG -Name $newStorageAccountName -Location $location -SkuName $storageType -EnableEncryptionService Blob -Tag $tags
 
-# 新旧ストレージアカウントのURL
-$source = $imageStorageAccount.PrimaryEndpoints.Blob + "vhds"
+# 新ストレージアカウントのURL
 $dest = $newStorageAccount.PrimaryEndpoints.Blob + "vhds"
 
 # 新旧ストレージアカウントのアクセスキー取得
