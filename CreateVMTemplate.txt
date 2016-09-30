@@ -1,0 +1,7 @@
+Stop-AzureRmVM -ResourceGroupName aztr99vm-rg -Name aztr99vm01
+Set-AzureRmVm -ResourceGroupName aztr99vm-rg -Name aztr99vm01 -Generalized
+
+$vm = Get-AzureRmVm -ResourceGroupName aztr99vm-rg -Name aztr99vm01 -Status
+$vm.Statuses
+
+Save-AzureRmVMImage -ResourceGroupName aztr99vm-rg -Name aztr99vm01 -DestinationContainerName vhds -VHDNamePrefix vmtemplate -Path C:\Users\yooi\azure\IaaSAdvancedHandson201610\aztr99vm01template.json

@@ -7,23 +7,23 @@
 ####################################################################
 
 # サブスクリプション名
-$subscriptionName = "Hybrid ID"
+$subscriptionName = "サブスクリプション名"
 
 # VMイメージが保管されているストレージアカウント名
-$imageStorageAccoutName = "yooiaad01c"
+$imageStorageAccoutName = "aztrNNst01"
 # VMイメージが保管されているストレージアカウントのリソースグループ名
-$imageStorageAccountRG = "yooiaad01c"
+$imageStorageAccountRG = "aztrNNvm-rg"
 # VMイメージ名
 $imageVHD = "template01201672915257.vhd"
 
 # 新規作成するストレージアカウント名
-$newStorageAccountName = "yooiaad01d"
+$newStorageAccountName = "aztrNNst02"
 # 新規作成するストレージアカウントのリソースグループ名
-$newStorageAccountRG = "yooiaad01d"
+$newStorageAccountRG = "aztrNNsys1-rg"
 # 新規作成するストレージアカウントの種類
 $storageType = "Standard_LRS"
 # 新規作成するストレージアカウントの場所
-$location = "eastasia"
+$location = "japanwest"
 
 # 課金IDタグ
 $tags += @{Name="billingid";value="99999"}

@@ -3,36 +3,38 @@
 
 # 前提：
 # 1. ストレージアカウントはすでに作成され、vhdsコンテナーにVMイメージがコピーされていること。(まだの場合はCreateStorageAccount.ps1を実行すること)
-# 2. 仮想ネットワークはすでに作成されていること。またそのサブネットは1つだけであること。
+# 2. 仮想ネットワークはすでに作成されていること。
 
 ####################################################################
 
 # サブスクリプション名
-$subscriptionName = "Hybrid ID"
+$subscriptionName = "サブスクリプション名"
 
 # ストレージアカウント名(すでに作成済みという前提)
-$storageAccountName = "yooiaad01d"
+$storageAccountName = "aztrNNst01"
 # ストレージアカウントおよびVMのリソースグループ名(すでに作成済みという前提)
-$systemRG = "yooiaad01d"
+$systemRG = "aztrNNsys1-rg"
 # VMイメージ名(すでにストレージアカウントにコピー済みという前提)
 $imageVHD = "template01201672915257.vhd"
 
 # 仮想ネットワークのリソースグループ名(すでに作成済みという前提)
-$vnetRG = "aad01-Migrated"
+$vnetRG = "aztrNNvnet-rg"
 # 仮想ネットワーク名(すでに作成済みという前提)
-$vnetName = "aad01"
+$vnetName = "aztrNNvnet"
 
 # VMを作成する場所(ストレージアカウントや仮想ネットワークと同じ場所であること)
 $location = "eastasia"
 
 # Azure VM名
-$vmName = "yooiaad01d"
+$vmName = "aztrNNvm02"
 # VMサイズ https://azure.microsoft.com/documentation/articles/virtual-machines-windows-sizes/
 $vmSize = "Standard_D1_v2"
 # (OS上の)コンピュータ名
-$computerName = "yooiaad01d"
+$computerName = "aztrNNvm02"
+# VMを配置するサブネット名
+$subnetName = "DMZ"
 # VMの内部IP
-$privateIP = "192.168.0.91"
+$privateIP = "10.0.0.10"
 
 # 課金IDタグ
 $tags += @{Name="billingid";value="99999"}
@@ -54,7 +56,8 @@ $pip = New-AzureRmPublicIpAddress -Name $pipName -ResourceGroupName $systemRG -L
 
 # 仮想NICの作成および内部IPの指定
 $nicName = $vmName + "nic"
-$nic = New-AzureRmNetworkInterface -Name $nicName -ResourceGroupName $systemRG -Location $location -SubnetId $vnet.Subnets[0].Id -PublicIpAddressId $pip.Id -PrivateIpAddress $privateIP
+$subnet = Get-AzureRmVirtualNetworkSubnetConfig -VirtualNetwork $vnet -Name $subnetName
+$nic = New-AzureRmNetworkInterface -Name $nicName -ResourceGroupName $systemRG -Location $location -SubnetId $subnet.Id -PublicIpAddressId $pip.Id -PrivateIpAddress $privateIP
 
 $storageAccount = Get-AzureRmStorageAccount -ResourceGroupName $systemRG -Name $storageAccountName
 $imageURI = $storageAccount.PrimaryEndpoints.Blob + "vhds/" + $imageVHD

@@ -1,0 +1,62 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/VM_IP.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmName": {
+      "type": "string"
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D1_v2"
+    },
+    "adminUserName": {
+      "type": "string"
+    },
+    "adminPassword": {
+      "type": "securestring"
+    },
+    "networkInterfaceId": {
+      "type": "string"
+    }
+  },
+  "resources": [
+    {
+      "apiVersion": "2016-03-30",
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "storageProfile": {
+          "osDisk": {
+            "osType": "Windows",
+            "name": "vmtemplate-osDisk.758e818f-72f2-46b4-a447-fb612c924a16.vhd",
+            "createOption": "FromImage",
+            "image": {
+              "uri": "https://aztr99st01.blob.core.windows.net/system/Microsoft.Compute/Images/vhds/vmtemplate-osDisk.758e818f-72f2-46b4-a447-fb612c924a16.vhd"
+            },
+            "vhd": {
+              "uri": "https://aztr99st01.blob.core.windows.net/vmcontaineraf9932cc-90a0-45e4-af7f-00271cc8d59c/osDisk.af9932cc-90a0-45e4-af7f-00271cc8d59c.vhd"
+            },
+            "caching": "ReadWrite"
+          }
+        },
+        "osProfile": {
+          "computerName": "[parameters('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[parameters('networkInterfaceId')]"
+            }
+          ]
+        },
+        "provisioningState": 0
+      },
+      "name": "[parameters('vmName')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "location": "japanwest"
+    }
+  ]
+}
