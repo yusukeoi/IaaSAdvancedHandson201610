@@ -6,8 +6,8 @@
 
 ####################################################################
 
-# サブスクリプション名
-$subscriptionName = "サブスクリプション名"
+# サブスクリプション名 (複数サブスクリプションがある場合は指定)
+# $subscriptionName = "サブスクリプション名"
 
 # VMイメージが保管されているストレージアカウント名
 $imageStorageAccoutName = "aztrNNst01"
@@ -34,7 +34,8 @@ $tags += @{Name="billingid";value="99999"}
 
 Login-AzureRmAccount
 
-Select-AzureRmSubscription -SubscriptionName $subscriptionName
+# 複数サブスクリプションがある場合には実行
+# Select-AzureRmSubscription -SubscriptionName $subscriptionName
 
 # VMイメージが保管されているストレージアカウントの取得
 $imageStorageAccount = Get-AzureRmStorageAccount -ResourceGroupName $imageStorageAccountRG -Name $imageStorageAccoutName

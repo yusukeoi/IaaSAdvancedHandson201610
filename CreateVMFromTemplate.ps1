@@ -7,15 +7,15 @@
 
 ####################################################################
 
-# サブスクリプション名
-$subscriptionName = "サブスクリプション名"
+# サブスクリプション名 (複数サブスクリプションがある場合は指定)
+# $subscriptionName = "サブスクリプション名"
 
 # ストレージアカウント名(すでに作成済みという前提)
-$storageAccountName = "aztrNNst01"
+$storageAccountName = "aztrNNst02"
 # ストレージアカウントおよびVMのリソースグループ名(すでに作成済みという前提)
 $systemRG = "aztrNNsys1-rg"
-# VMイメージ名(すでにストレージアカウントにコピー済みという前提)
-$imageVHD = "template01201672915257.vhd"
+# VMイメージのURL(すでにストレージアカウントにコピー済みという前提)
+$imageURI = "https://aztr99st02.blob.core.windows.net/vhds/vmtemplate-osDisk.758e818f-72f2-46b4-a447-fb612c924a16.vhd"
 
 # 仮想ネットワークのリソースグループ名(すでに作成済みという前提)
 $vnetRG = "aztrNNvnet-rg"
@@ -23,7 +23,7 @@ $vnetRG = "aztrNNvnet-rg"
 $vnetName = "aztrNNvnet"
 
 # VMを作成する場所(ストレージアカウントや仮想ネットワークと同じ場所であること)
-$location = "eastasia"
+$location = "japanwest"
 
 # Azure VM名
 $vmName = "aztrNNvm02"
@@ -43,7 +43,8 @@ $tags += @{Name="billingid";value="99999"}
 
 Login-AzureRmAccount
 
-Select-AzureRmSubscription -SubscriptionName $subscriptionName
+# 複数サブスクリプションがある場合には実行
+# Select-AzureRmSubscription -SubscriptionName $subscriptionName
 
 # Windows OS上の管理者IDおよびパスワードの入力
 $windowsAdmin = Get-Credential
@@ -60,7 +61,6 @@ $subnet = Get-AzureRmVirtualNetworkSubnetConfig -VirtualNetwork $vnet -Name $sub
 $nic = New-AzureRmNetworkInterface -Name $nicName -ResourceGroupName $systemRG -Location $location -SubnetId $subnet.Id -PublicIpAddressId $pip.Id -PrivateIpAddress $privateIP
 
 $storageAccount = Get-AzureRmStorageAccount -ResourceGroupName $systemRG -Name $storageAccountName
-$imageURI = $storageAccount.PrimaryEndpoints.Blob + "vhds/" + $imageVHD
 
 # VMの作成
 $vmConfig = New-AzureRmVMConfig -VMName $vmName -VMSize $vmSize
